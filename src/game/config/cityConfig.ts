@@ -13,14 +13,7 @@ export const SOURCE_HEIGHT = 1024
 export const INITIAL_GRID_SIZE = 24
 export const MAX_GRID_SIZE = 64
 
-// Building level thresholds (cumulative donation amount in dollars)
-export const BUILDING_LEVEL_THRESHOLDS: { maxAmount: number; level: number }[] = [
-  { maxAmount: 25, level: 1 },
-  { maxAmount: 75, level: 2 },
-  { maxAmount: 150, level: 3 },
-  // anything above 150 -> level 4
-]
-export const MAX_BUILDING_LEVEL = 4
+
 
 // City expansion
 export const EXPANSION_OCCUPANCY_THRESHOLD = 0.8
@@ -40,7 +33,7 @@ export const ASSET_KEYS = {
   road_tjunction: { key: 'road_tjunction', path: '/assets/tiles/tjunction.png' },
   road_fourway: { key: 'road_fourway', path: '/assets/tiles/fourway.png' },
   road_end: { key: 'road_end', path: '/assets/tiles/road end.png' },
-  climate_base: { key: 'climate_base', path: '/assets/buildings/climate_base.png' },
+  climate_base: { key: 'climate_base', path: '/assets/buildings/climate_lvl1.png' },
 } as const
 
 export type AssetKey = keyof typeof ASSET_KEYS

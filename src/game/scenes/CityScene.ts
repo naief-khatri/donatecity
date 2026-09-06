@@ -7,12 +7,14 @@ import {
   MAX_ZOOM,
   DEFAULT_ZOOM,
   ASSET_KEYS,
-} from '@/game/config/cityConfig'
+} from "@/game/config/cityConfig"
+import { getBuildingAssetKey } from "@/game/config/buildingRegistry"
 
 export default class CityScene extends Phaser.Scene {
   private cityState!: CityState
   private buildingSprites: Map<string, Phaser.GameObjects.Image> = new Map()
   private plotMarkers: Map<number, Phaser.GameObjects.Image> = new Map()
+  private targetZoom = 1;
   private isDragging = false
   private dragStartX = 0
   private dragStartY = 0
@@ -125,9 +127,14 @@ export default class CityScene extends Phaser.Scene {
       // Buildings (layerOffset >= 3)
       // Buildings are tall and should not be squashed to 64px height!
       // We apply the pure scale factor (128 / 1220 = 0.1049).
-      sprite.setScale(0.1049)
-      // Buildings should be anchored at their base. Assuming 1536x1024 with base near bottom:
-      sprite.setOrigin(0.5, 0.75)
+      // Force all buildings to render at a consistent width, preventing scale mismatches
+      // if we resize the raw asset to fix aliasing.
+      const targetWidth = 1536 * 0.1049;
+      sprite.displayWidth = targetWidth;
+      sprite.scaleY = sprite.scaleX;
+      
+      // Buildings should be anchored at their base. Assuming base near bottom:
+      sprite.setOrigin(0.5, 0.75);
     }
 
     if (gridX === 0 && gridY === 0) {
@@ -259,16 +266,32 @@ export default class CityScene extends Phaser.Scene {
     const plotWidth = plot?.width ?? 1
     const plotHeight = plot?.height ?? 1
 
-    const assetKey = ASSET_KEYS[building.assetId as keyof typeof ASSET_KEYS]?.key ?? ASSET_KEYS.climate_base.key
+    const desiredAssetKey = getBuildingAssetKey(building.cause, building.level)
+    let renderKey = desiredAssetKey
+    let needsGeneration = false
+    
+    if (!this.textures.exists(desiredAssetKey)) {
+       needsGeneration = true
+       if (building.level > 1 && this.textures.exists(getBuildingAssetKey(building.cause, building.level - 1))) {
+           renderKey = getBuildingAssetKey(building.cause, building.level - 1)
+       } else {
+           renderKey = 'building_new_placeholder'
+       }
+    }
 
     const sprite = this.placeAsset(
-      assetKey,
+      renderKey,
       building.gridX,
       building.gridY,
       plotWidth,
       plotHeight,
       3
     )
+    
+    if (needsGeneration) {
+       sprite.setAlpha(0.6)
+       this.triggerBuildingGeneration(building, sprite, desiredAssetKey)
+    }
 
     // Make interactive
     sprite.setInteractive({ useHandCursor: true })
@@ -348,7 +371,8 @@ export default class CityScene extends Phaser.Scene {
     const zoomY = this.scale.height / worldBounds.height
     const fitZoom = Math.min(zoomX, zoomY) * 0.85
     const initialZoom = Math.max(fitZoom, DEFAULT_ZOOM)
-    camera.setZoom(Phaser.Math.Clamp(initialZoom, MIN_ZOOM, MAX_ZOOM))
+    this.targetZoom = Phaser.Math.Clamp(initialZoom, MIN_ZOOM, MAX_ZOOM);
+    camera.setZoom(this.targetZoom);
 
     // Center camera on the city active bounds
     const bounds = this.cityState.activeBounds || {
@@ -392,14 +416,69 @@ export default class CityScene extends Phaser.Scene {
     // Wheel to zoom
     this.input.on('wheel', (_pointer: Phaser.Input.Pointer, _gameObjects: unknown[], _deltaX: number, deltaY: number) => {
       const camera = this.cameras.main
-      const zoomDelta = deltaY > 0 ? -0.08 : 0.08
-      const newZoom = Phaser.Math.Clamp(camera.zoom + zoomDelta, MIN_ZOOM, MAX_ZOOM)
-      camera.setZoom(newZoom)
+      // Trackpads send continuous small deltas, standard mice send larger discrete deltas (e.g. 100)
+      const zoomDelta = -deltaY * 0.001;
+      this.targetZoom = Phaser.Math.Clamp(this.targetZoom + zoomDelta, MIN_ZOOM, MAX_ZOOM);
     })
   }
 
   // ─── Public Methods (called from React bridge) ─────────────────────
 
+  private triggerBuildingGeneration(building: BuildingData, sprite: Phaser.GameObjects.Image, targetKey: string) {
+    // Show upgrading text
+    const text = this.add.text(sprite.x, sprite.y - 80, building.level > 1 ? "Upgrading..." : "Building...", {
+      fontFamily: "Arial, sans-serif",
+      fontSize: "24px",
+      color: "#ffffff",
+      fontStyle: "bold",
+      stroke: "#000000",
+      strokeThickness: 4
+    }).setOrigin(0.5).setDepth(sprite.depth + 1).setVisible(false)
+
+    // Animate text
+    this.tweens.add({
+      targets: text,
+      y: text.y - 20,
+      alpha: 0.8,
+      yoyo: true,
+      repeat: -1,
+      duration: 800
+    })
+
+    // Show only on hover
+    sprite.on('pointerover', () => { text.setVisible(true) })
+    sprite.on('pointerout', () => { text.setVisible(false) })
+
+    // Fire API
+    fetch("/api/generate-building", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        cause: building.cause,
+        level: building.level,
+        currentLevel: building.level > 1 ? building.level - 1 : 0
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.assetUrl) {
+        // Dynamically load the new texture!
+        this.load.image(targetKey, data.assetUrl)
+        this.load.once(`filecomplete-image-${targetKey}`, () => {
+          sprite.setTexture(targetKey)
+          sprite.setAlpha(1)
+          text.destroy()
+        })
+        this.load.start()
+      } else {
+        text.setText("Generation Failed")
+      }
+    })
+    .catch(err => {
+      console.error(err)
+      text.setText("Error")
+    })
+  }
   public addBuilding(data: BuildingData) {
     // Remove existing sprite if upgrading
     const existing = this.buildingSprites.get(data.campaignSlug)
@@ -408,6 +487,25 @@ export default class CityScene extends Phaser.Scene {
       this.buildingSprites.delete(data.campaignSlug)
     }
     this.createBuildingSprite(data, true)
+  }
+
+  
+  override update(time: number, delta: number) {
+    // Smooth camera zooming
+    if (this.targetZoom) {
+      const camera = this.cameras.main;
+      const diff = this.targetZoom - camera.zoom;
+      if (Math.abs(diff) > 0.001) {
+        camera.setZoom(camera.zoom + diff * 0.15); // Smooth interpolation factor
+      } else if (camera.zoom !== this.targetZoom) {
+        camera.setZoom(this.targetZoom);
+      }
+    }
+  }
+
+  
+  public applyZoomDelta(delta: number) {
+    this.targetZoom = Phaser.Math.Clamp(this.targetZoom + delta, MIN_ZOOM, MAX_ZOOM);
   }
 
   public updateBuilding(data: BuildingData) {

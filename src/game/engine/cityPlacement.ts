@@ -1,18 +1,12 @@
 import type { DonationEvent, BuildingData, BuildingPlot } from '@/game/types/cityTypes'
-import { BUILDING_LEVEL_THRESHOLDS, MAX_BUILDING_LEVEL } from '@/game/config/cityConfig'
-import { getBuildingEntry } from '@/game/config/buildingRegistry'
+import { getBuildingEntry, getBuildingAssetKey } from '@/game/config/buildingRegistry'
 
 /**
  * Calculate building level from cumulative donation amount.
- * $0-25 → 1, $26-75 → 2, $76-150 → 3, $151+ → 4
+ * $0-49 → 1, $50-99 → 2, $100-149 → 3, ... (Unlimited)
  */
 export function calculateBuildingLevel(totalDonated: number): number {
-  for (const threshold of BUILDING_LEVEL_THRESHOLDS) {
-    if (totalDonated <= threshold.maxAmount) {
-      return threshold.level
-    }
-  }
-  return MAX_BUILDING_LEVEL
+  return Math.floor(totalDonated / 50) + 1
 }
 
 /**
@@ -91,7 +85,7 @@ export function buildCityFromDonations(
       campaignName: data.campaignName,
       organizationName: data.organizationName,
       cause: data.cause,
-      assetId: entry.assetKey,
+      assetId: getBuildingAssetKey(data.cause, level),
       level,
       totalDonated: data.total,
       donationCount: data.count,

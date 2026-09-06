@@ -6,16 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "fix-assets": "node scripts/fix-resolutions.js"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
+    "@google/genai": "^2.21.0",
     "@supabase/ssr": "^0.12.6",
     "@supabase/supabase-js": "^2.115.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.2.5",
     "dotenv": "^17.4.2",
     "framer-motion": "^13.2.0",
+    "jimp": "^1.6.1",
     "lucide-react": "^1.41.0",
     "next": "16.3.4",
     "phaser": "^4.2.1",

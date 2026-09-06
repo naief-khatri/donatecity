@@ -10,10 +10,25 @@ export function CampaignsModal() {
   const [isSearchingLive, setIsSearchingLive] = useState(false)
 
   // Filter local campaigns
-  const localCampaigns = store.campaigns.filter(c => 
-    c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.cause_category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+
+  const parseDescription = (desc: string) => {
+    try {
+      if (desc.startsWith('{')) {
+        return JSON.parse(desc);
+      }
+    } catch(e) {}
+    return { originalDescription: desc, isTrending: false };
+  };
+
+  const trendingCampaigns = store.campaigns.filter(c => parseDescription(c.description).isTrending);
+  
+  const localCampaigns = store.campaigns.filter(c => {
+    const isTrending = parseDescription(c.description).isTrending;
+    if (isTrending) return false;
+    return c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+           c.cause_category.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
 
   // Live search effect for Every.org
   useEffect(() => {
@@ -37,6 +52,26 @@ export function CampaignsModal() {
     return () => clearTimeout(delayDebounceFn)
   }, [searchTerm])
 
+  const detectCause = (campaign: any) => {
+    if (campaign.cause_category) return campaign.cause_category;
+    
+    const text = (campaign.name + " " + (campaign.description || "")).toLowerCase();
+    
+    if (text.includes('wildfire') || text.includes('fire')) return 'wildfires';
+    if (text.includes('climate') || text.includes('environment') || text.includes('planet')) return 'climate';
+    if (text.includes('mental health') || text.includes('therapy') || text.includes('depression') || text.includes('suicide')) return 'mental-health';
+    if (text.includes('water') || text.includes('ocean') || text.includes('river') || text.includes('clean water')) return 'water';
+    if (text.includes('refugee') || text.includes('asylum') || text.includes('displaced')) return 'refugees';
+    if (text.includes('energy') || text.includes('solar') || text.includes('power')) return 'energy';
+    if (text.includes('health') || text.includes('medical') || text.includes('cancer') || text.includes('hospital') || text.includes('disease') || text.includes('clinic')) return 'health';
+    if (text.includes('child') || text.includes('youth') || text.includes('kid') || text.includes('orphan')) return 'children';
+    if (text.includes('food') || text.includes('hunger') || text.includes('meal') || text.includes('starvation') || text.includes('famine')) return 'food';
+    if (text.includes('education') || text.includes('school') || text.includes('student') || text.includes('teacher') || text.includes('learning')) return 'education';
+    if (text.includes('animal') || text.includes('dog') || text.includes('cat') || text.includes('wildlife') || text.includes('pet')) return 'animals';
+    
+    return 'health'; // Safe default
+  };
+
   const handleDonate = async (campaign: any, amount: number) => {
     // We will simulate webhook call for testing
     try {
@@ -44,7 +79,7 @@ export function CampaignsModal() {
         cityId: store.cityId,
         campaignSlug: campaign.slug,
         campaignName: campaign.name,
-        cause: campaign.cause_category || 'global',
+        cause: detectCause(campaign),
         donorId: store.userId,
       }
       const encodedMetadata = Buffer.from(JSON.stringify(metadata)).toString('base64')
@@ -101,6 +136,44 @@ export function CampaignsModal() {
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full bg-white/10 border border-white/20 text-white placeholder-gray-400 rounded-xl px-4 py-3 mb-6 focus:outline-none focus:ring-2 focus:ring-emerald-500"
         />
+
+
+        {trendingCampaigns.length > 0 && !searchTerm && (
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-xl">🔥</span>
+              <h3 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">Trending Global Crises</h3>
+              <span className="ml-auto text-xs font-bold bg-white/10 px-2 py-1 rounded text-gray-400 border border-white/5">AI Aggregated</span>
+            </div>
+            <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent snap-x">
+              {trendingCampaigns.map(c => {
+                const meta = parseDescription(c.description);
+                return (
+                  <div key={c.slug} className="flex-none w-[320px] bg-gradient-to-b from-orange-900/40 to-black/40 rounded-xl p-5 border border-orange-500/30 flex flex-col snap-center shadow-lg relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-orange-500 to-red-500"></div>
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="text-xs font-bold text-orange-400 uppercase tracking-wider">{meta.eventName || 'Emergency Event'}</div>
+                    </div>
+                    <div className="font-bold text-lg leading-tight mb-2 text-white">{c.name}</div>
+                    <div className="text-sm text-gray-300 flex-grow mb-4 leading-snug">{meta.researchSummary || meta.originalDescription}</div>
+                    
+                    <div className="flex gap-2 mt-auto">
+                      <button onClick={() => handleDonate(c, 10)} className="flex-1 bg-orange-600/20 hover:bg-orange-600/40 border border-orange-500/30 text-orange-300 py-2 rounded-lg text-sm font-medium transition-colors">
+                        $10
+                      </button>
+                      <button onClick={() => handleDonate(c, 25)} className="flex-1 bg-orange-600/40 hover:bg-orange-600/60 border border-orange-500/50 text-orange-200 py-2 rounded-lg text-sm font-medium transition-colors">
+                        $25
+                      </button>
+                      <button onClick={() => handleDonate(c, 50)} className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-500 hover:to-red-500 text-white py-2 rounded-lg text-sm font-bold shadow-lg shadow-orange-900/50 transition-colors">
+                        $50
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {localCampaigns.map(c => (

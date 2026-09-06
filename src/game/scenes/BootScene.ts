@@ -1,5 +1,7 @@
 import Phaser from 'phaser'
 import { ASSET_KEYS } from '@/game/config/cityConfig'
+import { getBuildingAssetKey, getBuildingAssetUrl } from '@/game/config/buildingRegistry'
+import type { CityState, BuildingData } from '@/game/types/cityTypes'
 
 export default class BootScene extends Phaser.Scene {
   constructor() {
@@ -49,10 +51,30 @@ export default class BootScene extends Phaser.Scene {
       percentText.setText('100%')
     })
 
-    // Load all assets
+    // Load static base assets
     for (const asset of Object.values(ASSET_KEYS)) {
       this.load.image(asset.key, asset.path)
     }
+
+    // Load placeholder assets
+    this.load.image('building_construction_placeholder', '/assets/buildings/building_construction_placeholder.png')
+    this.load.image('building_new_placeholder', '/assets/buildings/building_new_placeholder.png')
+
+    // Dynamically load required building assets based on CityState
+    const cityState = this.registry.get('cityState') as CityState | null
+    if (cityState) {
+      for (const building of cityState.buildings) {
+        const assetKey = getBuildingAssetKey(building.cause, building.level)
+        const assetUrl = getBuildingAssetUrl(building.cause, building.level)
+        
+        if (!this.textures.exists(assetKey)) {
+          this.load.image(assetKey, assetUrl)
+        }
+      }
+    }
+
+    // If any dynamically loaded image 404s, Phaser emits loaderror.
+    // We will catch it in CityScene and render a placeholder, then trigger API gen.
   }
 
   create() {

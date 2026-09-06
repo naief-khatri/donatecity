@@ -55,6 +55,7 @@ interface CityStore {
   addDonationAndBuilding: (donation: DonationEvent, building: BuildingData) => void
   enterVisitMode: (userId: string, cityName: string, visitCityState: CityState) => void
   exitVisitMode: () => void
+  zoomCamera: (delta: number) => void
   visitCity: (userId: string) => Promise<void>
   resetCamera: () => void
 
@@ -231,6 +232,13 @@ export const useCityStore = create<CityStore>((set, get) => ({
       causesSupported: visitCityState.causesSupported,
       buildings: visitCityState.buildings
     })
+  },
+
+  zoomCamera: (delta) => {
+    const scene = get()._phaserScene as { applyZoomDelta?: (d: number) => void } | null
+    if (scene?.applyZoomDelta) {
+      scene.applyZoomDelta(delta)
+    }
   },
 
   exitVisitMode: () => {

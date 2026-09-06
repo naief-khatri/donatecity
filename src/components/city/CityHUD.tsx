@@ -2,7 +2,7 @@
 
 import { useCityStore } from '@/stores/useCityStore'
 import { CityStatsPanel } from '@/components/city/CityStatsPanel'
-import { Map, Trophy, User, Settings, ArrowLeft } from 'lucide-react'
+import { Map, Trophy, User, Settings, ArrowLeft, Plus, Minus } from 'lucide-react'
 
 export function CityHUD() {
   const store = useCityStore()
@@ -56,6 +56,26 @@ export function CityHUD() {
           </button>
         </div>
       </div>
+
+      {/* Zoom Controls */}
+      <div className="absolute bottom-8 right-6 pointer-events-auto flex flex-col gap-2 bg-black/60 backdrop-blur-md p-1 rounded-xl shadow-lg border border-white/10">
+        <button 
+          onClick={() => store.zoomCamera(0.25)}
+          className="p-2 text-white/90 hover:text-white hover:bg-white/20 rounded-lg transition-colors active:scale-95"
+          title="Zoom In"
+        >
+          <Plus className="w-5 h-5" />
+        </button>
+        <div className="h-px w-full bg-white/10" />
+        <button 
+          onClick={() => store.zoomCamera(-0.25)}
+          className="p-2 text-white/90 hover:text-white hover:bg-white/20 rounded-lg transition-colors active:scale-95"
+          title="Zoom Out"
+        >
+          <Minus className="w-5 h-5" />
+        </button>
+      </div>
     </div>
   )
 }
+
