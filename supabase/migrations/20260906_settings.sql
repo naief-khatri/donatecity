@@ -1,0 +1,2 @@
+ALTER TABLE profiles ADD COLUMN is_anonymous BOOLEAN DEFAULT false NOT NULL;
+ALTER TABLE profiles ADD COLUMN allow_visits BOOLEAN DEFAULT true NOT NULL;
