@@ -1,8 +1,14 @@
-# 🏛 Donate City
+<img width="1774" height="887" alt="donate city" src="https://github.com/user-attachments/assets/8f4fa8c8-4d9c-48ba-95d6-ee16b133d0d3" />
+
+# Donate City
 
 **Donate City** is a gamified, interactive donation platform where every real-world charitable contribution physically builds and expands a personal, isometric 2D city. 
 
 By integrating with the **Every.org API**, users can discover trending global crises or search for any registered charity, donate directly, and instantly see their impact visualized as custom buildings, roads, and bustling city grids.
+
+You can check the demo [here](https://youtu.be/HsY17rV_0yA)
+
+
 
 ---
 
