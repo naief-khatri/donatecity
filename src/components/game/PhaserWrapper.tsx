@@ -10,7 +10,7 @@ const PhaserGame = dynamic(() => import('@/components/game/PhaserGame'), {
   loading: () => (
     <div className="w-screen h-screen flex items-center justify-center bg-[#1a1a2e]">
       <div className="text-center">
-        <div className="text-white text-2xl font-bold mb-4">Outgive City</div>
+        <div className="text-white text-2xl font-bold mb-4">Donate City</div>
         <div className="text-gray-400 animate-pulse">Initializing...</div>
       </div>
     </div>
