@@ -4,8 +4,8 @@ import { GoogleGenAI } from '@google/genai'
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
-  if (process.env.NODE_ENV !== 'development' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    if (process.env.NODE_ENV !== 'development') {
+  if ((process.env.NODE_ENV as string) !== 'development' && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if ((process.env.NODE_ENV as string) !== 'development') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
   }
