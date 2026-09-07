@@ -1,8 +1,7 @@
-import { login, signup, signInWithGoogle } from './actions'
-import { Button } from '@/components/ui/button'
+import { login, signup } from './actions'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { GoogleLoginButton } from '@/components/GoogleLoginButton'
 
 export default async function LoginPage({
   searchParams,
@@ -11,61 +10,83 @@ export default async function LoginPage({
 }) {
   const params = await searchParams
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle>Welcome to Outgive</CardTitle>
-          <CardDescription>Log in or create an account to start building.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <form action={signInWithGoogle}>
-              <button 
-                type="submit" 
-                className="w-full inline-flex items-center justify-center rounded-lg h-10 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background"
-              >
-                Sign in with Google
-              </button>
-            </form>
+    <div className="flex items-center justify-center min-h-screen bg-[#F0F4F8] selection:bg-[#FFD166] selection:text-black">
+      
+      {/* Playful background blobs */}
+      <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#FFD166]/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#4285F4]/20 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="relative w-full max-w-md p-8 bg-white border-4 border-[#1E1E24] rounded-[2rem] shadow-[8px_8px_0_0_#1E1E24] m-4">
+        
+        <div className="text-center mb-8">
+          <div className="inline-block p-4 bg-[#FFD166] rounded-2xl border-4 border-[#1E1E24] shadow-[4px_4px_0_0_#1E1E24] mb-6 transform -rotate-2">
+            <h1 className="text-4xl font-black tracking-tight text-[#1E1E24]">Donate City</h1>
+          </div>
+          <p className="text-lg font-medium text-[#64646F]">Build your city. Change the world.</p>
+        </div>
+
+        <div className="flex flex-col gap-6">
+          <GoogleLoginButton />
+          
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t-2 border-dashed border-[#E1E1E8]"></div>
+            </div>
+            <div className="relative bg-white px-4">
+              <span className="text-sm font-bold text-[#A1A1AA] uppercase tracking-wider">Or play with email</span>
+            </div>
+          </div>
+
+          <form className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="font-bold text-[#1E1E24]">Email address</Label>
+              <Input 
+                id="email" 
+                name="email" 
+                type="email" 
+                placeholder="mayor@city.com"
+                required 
+                className="h-12 border-2 border-[#E1E1E8] rounded-xl focus-visible:ring-0 focus-visible:border-[#4285F4] text-lg px-4 bg-[#F8FAFC]"
+              />
+            </div>
             
-            <div className="relative flex items-center py-2">
-              <div className="flex-grow border-t border-gray-300"></div>
-              <span className="flex-shrink-0 mx-4 text-gray-400 text-sm">Or with email</span>
-              <div className="flex-grow border-t border-gray-300"></div>
+            <div className="space-y-2">
+              <Label htmlFor="password" className="font-bold text-[#1E1E24]">Password</Label>
+              <Input 
+                id="password" 
+                name="password" 
+                type="password" 
+                placeholder="••••••••"
+                required 
+                className="h-12 border-2 border-[#E1E1E8] rounded-xl focus-visible:ring-0 focus-visible:border-[#4285F4] text-lg px-4 bg-[#F8FAFC]"
+              />
             </div>
 
-            <form className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" required />
+            {params?.message && (
+              <div className="p-3 bg-[#FFE5E5] border-2 border-[#FF4A4A] rounded-xl text-center">
+                <p className="text-sm font-bold text-[#FF4A4A]">{params.message}</p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input id="password" name="password" type="password" required />
-              </div>
-              {params?.message && (
-                <p className="text-sm text-red-500 text-center">{params.message}</p>
-              )}
-              <div className="flex gap-4 pt-4">
-                <button 
-                  type="submit" 
-                  formAction={login} 
-                  className="w-full inline-flex items-center justify-center rounded-lg h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background"
-                >
-                  Log In
-                </button>
-                <button 
-                  type="submit" 
-                  formAction={signup} 
-                  className="w-full inline-flex items-center justify-center rounded-lg h-10 px-4 py-2 border border-input bg-background hover:bg-accent hover:text-accent-foreground text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background"
-                >
-                  Sign Up
-                </button>
-              </div>
-            </form>
-          </div>
-        </CardContent>
-      </Card>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <button 
+                type="submit" 
+                formAction={login} 
+                className="w-full h-12 bg-white text-[#1E1E24] border-2 border-[#1E1E24] rounded-xl font-bold shadow-[0_4px_0_0_#1E1E24] hover:shadow-[0_2px_0_0_#1E1E24] hover:translate-y-[2px] transition-all"
+              >
+                Log In
+              </button>
+              <button 
+                type="submit" 
+                formAction={signup} 
+                className="w-full h-12 bg-[#4285F4] text-white border-2 border-[#1E1E24] rounded-xl font-bold shadow-[0_4px_0_0_#1E1E24] hover:shadow-[0_2px_0_0_#1E1E24] hover:translate-y-[2px] transition-all"
+              >
+                Sign Up
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   )
 }
