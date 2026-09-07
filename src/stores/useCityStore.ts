@@ -45,6 +45,7 @@ interface CityStore {
   visitingUserId: string | null
   visitingCityName: string | null
   originalCityState: CityState | null
+  originalDonations: DonationEvent[] | null
 
   // Actions
   initializeCity: (serverData: ServerCityData) => void
@@ -53,7 +54,7 @@ interface CityStore {
   closeModal: () => void
   closeBuildingModal: () => void
   addDonationAndBuilding: (donation: DonationEvent, building: BuildingData) => void
-  enterVisitMode: (userId: string, cityName: string, visitCityState: CityState) => void
+  enterVisitMode: (userId: string, cityName: string, visitCityState: CityState, visitDonations: DonationEvent[]) => void
   exitVisitMode: () => void
   zoomCamera: (delta: number) => void
   visitCity: (userId: string) => Promise<void>
@@ -81,6 +82,7 @@ export const useCityStore = create<CityStore>((set, get) => ({
   campaigns: [],
   cityState: null,
   originalCityState: null,
+        originalDonations: null,
   
   activeModal: null,
   showBuildingModal: false,
@@ -109,6 +111,8 @@ export const useCityStore = create<CityStore>((set, get) => ({
       amount: Number(d.amount),
       sequence: d.sequence,
       createdAt: d.created_at,
+      donatedById: d.donated_by_id || undefined,
+      donorMessage: d.donor_message || undefined,
     }))
     
     // Sort donations by sequence to ensure deterministic order
@@ -213,13 +217,14 @@ export const useCityStore = create<CityStore>((set, get) => ({
     }
   },
 
-  enterVisitMode: (userId, cityName, visitCityState) => {
+  enterVisitMode: (userId, cityName, visitCityState, visitDonations) => {
     const currentState = get()
     set({
       isVisitingCity: true,
       visitingUserId: userId,
       visitingCityName: cityName,
       originalCityState: currentState.cityState,
+      originalDonations: currentState.donations,
       cityState: visitCityState,
       activeModal: null,
       showBuildingModal: false,
@@ -230,7 +235,8 @@ export const useCityStore = create<CityStore>((set, get) => ({
       totalDonated: visitCityState.totalDonated,
       campaignsSupported: visitCityState.campaignsSupported,
       causesSupported: visitCityState.causesSupported,
-      buildings: visitCityState.buildings
+      buildings: visitCityState.buildings,
+      donations: visitDonations
     })
   },
 
@@ -258,7 +264,8 @@ export const useCityStore = create<CityStore>((set, get) => ({
         totalDonated: original.totalDonated,
         campaignsSupported: original.campaignsSupported,
         causesSupported: original.causesSupported,
-        buildings: original.buildings
+        buildings: original.buildings,
+        donations: currentState.originalDonations || currentState.donations
       })
     }
   },
@@ -317,7 +324,7 @@ export const useCityStore = create<CityStore>((set, get) => ({
         activeBounds: { minX, maxX, minY, maxY }
       }
 
-      get().enterVisitMode(userId, city.name, cityState)
+      get().enterVisitMode(userId, city.name, cityState, mappedDonations)
     } catch (err) {
       console.error(err)
       alert("Failed to visit city.")

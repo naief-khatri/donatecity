@@ -59,6 +59,8 @@ export interface DonationEvent {
   amount: number
   sequence: number // user-scoped order
   createdAt: string
+  donatedById?: string
+  donorMessage?: string
 }
 
 // Complete city state passed to Phaser
@@ -121,6 +123,8 @@ export interface ServerCityData {
     amount: number
     sequence: number
     created_at: string
+    donated_by_id?: string | null
+    donor_message?: string | null
   }>
   campaigns: Array<{
     id: string

@@ -43,7 +43,7 @@ export default async function Home() {
   // Fetch user's donations
   const { data: donations } = await supabase
     .from('donations')
-    .select('id, campaign_slug, campaign_name, organization_name, cause, amount, sequence, created_at')
+    .select('id, campaign_slug, campaign_name, organization_name, cause, amount, sequence, created_at, donated_by_id, donor_message')
     .eq('user_id', user.id)
     .order('sequence', { ascending: true })
 

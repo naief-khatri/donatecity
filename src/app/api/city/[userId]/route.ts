@@ -7,7 +7,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ user
   
   const { data: city, error: cityError } = await supabase
     .from('cities')
-    .select('*')
+    .select('id, campaign_slug, campaign_name, organization_name, cause, amount, sequence, created_at, donated_by_id, donor_message')
     .eq('owner_id', userId)
     .single()
 
